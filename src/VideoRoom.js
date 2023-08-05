@@ -14,6 +14,16 @@ function VideoRoom() {
     let remoteVideo = document.querySelector("#remoteVideo");
     remoteVideo.srcObject = remoteStream;
 
+    localStream.getTracks().forEach((track) => {
+      peerConnection.addTrack(track, localStream);
+    })
+
+    peerConnection.ontrack = async (event) => {
+      event.streams[0].getTracks().forEach((track) => {
+        remoteStream.addTrack(track);
+      })
+    }
+
     let offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
@@ -29,6 +39,7 @@ function VideoRoom() {
       navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
         const myLocalVideo = document.querySelector("#localVideo");
         myLocalVideo.srcObject = stream;
+        setLocalStream(stream);
       })
     }
   }, [displayVideo])

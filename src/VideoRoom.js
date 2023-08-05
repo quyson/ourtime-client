@@ -14,20 +14,66 @@ function VideoRoom() {
     let remoteVideo = document.querySelector("#remoteVideo");
     remoteVideo.srcObject = remoteStream;
 
-    localStream.getTracks().forEach((track) => {
-      peerConnection.addTrack(track, localStream);
-    })
-
+    if(localStream){
+      localStream.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStream);
+      })
+    }
+    
     peerConnection.ontrack = async (event) => {
       event.streams[0].getTracks().forEach((track) => {
         remoteStream.addTrack(track);
       })
     }
 
+    peerConnection.onicecandidate = async (event) => {
+      if(event.candidate){
+        document.getElementById("offer").value = JSON.stringify(peerConnection.localDescription);
+      }
+    }
+
     let offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
     document.getElementById("offer").value = JSON.stringify(offer);
+  }
+
+  const createAnswer = async () => {
+    let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
+    let peerConnection = new RTCPeerConnection(configuration);
+    let remoteStream = new MediaStream();
+    let remoteVideo = document.querySelector("#remoteVideo");
+    remoteVideo.srcObject = remoteStream;
+
+    if(localStream){
+      localStream.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStream);
+      })
+    }
+    
+    peerConnection.ontrack = async (event) => {
+      event.streams[0].getTracks().forEach((track) => {
+        remoteStream.addTrack(track);
+      })
+    }
+
+    peerConnection.onicecandidate = async (event) => {
+      if(event.candidate){
+        document.getElementById("answer").value = JSON.stringify(peerConnection.localDescription);
+      }
+    }
+
+    //get offer from peer that is calling through signal R, but in this case its gonna be DOM
+    let offer = document.getElementById("offer").value
+    offer= JSON.parse(offer)
+
+    await peerConnection.setRemoteDescription(offer);
+
+    let answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+
+    document.getElementById("answer").value = JSON.stringify(answer)
+
   }
 
   const allowVideo = (e) => {
@@ -57,6 +103,11 @@ function VideoRoom() {
         <h1>Offer</h1>
         <button type="button" onClick={createOffer}>Create an Offer</button>
         <textarea id="offer"></textarea>
+      </div>
+      <div>
+        <h1>Answer</h1>
+        <button type="button" onClick={createAnswer}>Create an Answer</button>
+        <textarea id="answer"></textarea>
       </div>
     </div>
   );

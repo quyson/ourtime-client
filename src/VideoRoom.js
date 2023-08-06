@@ -6,6 +6,7 @@ function VideoRoom() {
   const [displayVideo, setDisplayVideo] = useState(false);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [globalPeerConnection, setGlobalPeerConnection] = useState({});
 
   const createOffer = async () => {
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
@@ -34,6 +35,8 @@ function VideoRoom() {
 
     let offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
+
+    setGlobalPeerConnection(peerConnection);
 
     document.getElementById("offer").value = JSON.stringify(offer);
   }
@@ -73,7 +76,17 @@ function VideoRoom() {
     await peerConnection.setLocalDescription(answer);
 
     document.getElementById("answer").value = JSON.stringify(answer)
+  }
 
+  const handleAnswer = async () => {
+    let answer = document.getElementById("answer").value;
+    if(!answer){alert("Retrieve Answer first")};
+
+    answer = JSON.parse(answer);
+
+    if(!globalPeerConnection.currentRemoteDescription){
+      await globalPeerConnection.setRemoteDescription(answer);
+    }
   }
 
   const allowVideo = (e) => {
@@ -107,6 +120,7 @@ function VideoRoom() {
       <div>
         <h1>Answer</h1>
         <button type="button" onClick={createAnswer}>Create an Answer</button>
+        <button type="button" onClick={handleAnswer}>Add an Answer</button>
         <textarea id="answer"></textarea>
       </div>
     </div>

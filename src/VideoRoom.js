@@ -1,12 +1,12 @@
 import React, {useState, useEffect, useRef} from "react";
-
+import signalRService from "./signalR";
 
 function VideoRoom() {
 
   const [displayVideo, setDisplayVideo] = useState(false);
   const [localStream, setLocalStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
   const [globalPeerConnection, setGlobalPeerConnection] = useState({});
+  const [myConnectionId, setMyConnectionId] = useState(null);
 
   const createOffer = async () => {
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
@@ -102,6 +102,14 @@ function VideoRoom() {
       })
     }
   }, [displayVideo])
+
+  useEffect(() => {
+    signalRService.signalConnection.startConnection().then((response) => {
+      console.log("Connection to WebRTC has been created!"); 
+      setMyConnectionId(signalRService.signalConnection.connectionId);
+    })
+    .catch((error) => console.log(error));
+  }, [])
  
   return (
     <div>

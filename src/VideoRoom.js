@@ -30,6 +30,8 @@ function VideoRoom() {
     peerConnection.onicecandidate = async (event) => {
       if(event.candidate){
         document.getElementById("offer").value = JSON.stringify(peerConnection.localDescription);
+        let iceOffer = JSON.stringify(peerConnection.localDescription);
+        console.log(iceOffer);
       }
     }
 
@@ -38,7 +40,7 @@ function VideoRoom() {
 
     setGlobalPeerConnection(peerConnection);
 
-    document.getElementById("offer").value = JSON.stringify(offer);
+    //signalRService.signalConnection.invoke("Offer", (peerId, iceOffer, username));
   }
 
   const createAnswer = async () => {
@@ -104,7 +106,7 @@ function VideoRoom() {
   }, [displayVideo])
 
   useEffect(() => {
-    signalRService.signalConnection.startConnection().then((response) => {
+    signalRService.startConnection().then((response) => {
       console.log("Connection to WebRTC has been created!"); 
       setMyConnectionId(signalRService.signalConnection.connectionId);
     })
@@ -113,6 +115,9 @@ function VideoRoom() {
  
   return (
     <div>
+      <div>
+        {myConnectionId ? <div>My Connection ID: {myConnectionId}</div> : null}
+      </div>
       <div>
         <button type="button" onClick={allowVideo}>Use Camera</button>
         {displayVideo ? <video playsInline autoPlay muted id="localVideo"></video> : <div>No Video</div>}

@@ -7,6 +7,8 @@ function VideoRoom() {
   const [localStream, setLocalStream] = useState(null);
   const [globalPeerConnection, setGlobalPeerConnection] = useState({});
   const [myConnectionId, setMyConnectionId] = useState(null);
+  const [peerId, setPeerId] = useState("");
+  const [username, setUsername] = useState("");
 
   const createOffer = async () => {
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
@@ -14,6 +16,7 @@ function VideoRoom() {
     let remoteStream = new MediaStream();
     let remoteVideo = document.querySelector("#remoteVideo");
     remoteVideo.srcObject = remoteStream;
+    let iceOffer;
 
     if(localStream){
       localStream.getTracks().forEach((track) => {
@@ -29,9 +32,8 @@ function VideoRoom() {
 
     peerConnection.onicecandidate = async (event) => {
       if(event.candidate){
-        document.getElementById("offer").value = JSON.stringify(peerConnection.localDescription);
-        let iceOffer = JSON.stringify(peerConnection.localDescription);
-        console.log(iceOffer);
+        //document.getElementById("offer").value = JSON.stringify(peerConnection.localDescription);
+        iceOffer = JSON.stringify(peerConnection.localDescription);
       }
     }
 
@@ -40,15 +42,20 @@ function VideoRoom() {
 
     setGlobalPeerConnection(peerConnection);
 
-    //signalRService.signalConnection.invoke("Offer", (peerId, iceOffer, username));
+    //document.querySelector("#offer").value = JSON.stringify(offer);
+
+    signalRService.signalConnection.invoke("Offer", (peerId, iceOffer, username));
   }
 
-  const createAnswer = async () => {
+  const createAnswer = async (callerId, offer) => {
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
     let peerConnection = new RTCPeerConnection(configuration);
     let remoteStream = new MediaStream();
     let remoteVideo = document.querySelector("#remoteVideo");
     remoteVideo.srcObject = remoteStream;
+    let iceAnswer;
+
+    setDisplayVideo(true);
 
     if(localStream){
       localStream.getTracks().forEach((track) => {
@@ -64,21 +71,18 @@ function VideoRoom() {
 
     peerConnection.onicecandidate = async (event) => {
       if(event.candidate){
-        document.getElementById("answer").value = JSON.stringify(peerConnection.localDescription);
+        iceAnswer = JSON.stringify(peerConnection.localDescription);
       }
     }
 
-    //get offer from peer that is calling through signal R, but in this case its gonna be DOM
-    let offer = document.getElementById("offer").value
-    offer= JSON.parse(offer)
+    offer = JSON.parse(offer)
 
     await peerConnection.setRemoteDescription(offer);
-
     let answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
 
-    document.getElementById("answer").value = JSON.stringify(answer)
-  }
+    signalRService.signalConnection.invoke("Answer", (callerId, iceAnswer, username))
+  };
 
   const handleAnswer = async () => {
     let answer = document.getElementById("answer").value;

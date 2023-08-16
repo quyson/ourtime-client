@@ -3,14 +3,14 @@ import signalRService from "./signalR";
 
 function VideoRoom() {
 
-  const [displayVideo, setDisplayVideo] = useState(false);
   const [localStream, setLocalStream] = useState(null);
   const [globalPeerConnection, setGlobalPeerConnection] = useState({});
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [peerId, setPeerId] = useState("");
   const [username, setUsername] = useState("");
+  const [connected, setConnected] = useState(false);
 
-  const createOffer = async () => {
+  const createOffer = async (peerId) => {
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
     let peerConnection = new RTCPeerConnection(configuration);
     let remoteStream = new MediaStream();
@@ -32,7 +32,6 @@ function VideoRoom() {
 
     peerConnection.onicecandidate = async (event) => {
       if(event.candidate){
-        //document.getElementById("offer").value = JSON.stringify(peerConnection.localDescription);
         iceOffer = JSON.stringify(peerConnection.localDescription);
       }
     }
@@ -42,20 +41,17 @@ function VideoRoom() {
 
     setGlobalPeerConnection(peerConnection);
 
-    //document.querySelector("#offer").value = JSON.stringify(offer);
-
     signalRService.signalConnection.invoke("Offer", (peerId, iceOffer, username));
   }
 
-  const createAnswer = async (callerId, offer) => {
+  const createAnswer = async (callerId, offer, username) => {
+    console.log(offer);
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
     let peerConnection = new RTCPeerConnection(configuration);
     let remoteStream = new MediaStream();
     let remoteVideo = document.querySelector("#remoteVideo");
     remoteVideo.srcObject = remoteStream;
     let iceAnswer;
-
-    setDisplayVideo(true);
 
     if(localStream){
       localStream.getTracks().forEach((track) => {
@@ -84,10 +80,8 @@ function VideoRoom() {
     signalRService.signalConnection.invoke("Answer", (callerId, iceAnswer, username))
   };
 
-  const handleAnswer = async () => {
-    let answer = document.getElementById("answer").value;
-    if(!answer){alert("Retrieve Answer first")};
-
+  const handleAnswer = async (calleeId, answer, calleeUsername) => {
+    console.log(answer);
     answer = JSON.parse(answer);
 
     if(!globalPeerConnection.currentRemoteDescription){
@@ -95,24 +89,39 @@ function VideoRoom() {
     }
   }
 
-  const allowVideo = (e) => {
-    setDisplayVideo(true);
+
+  //handle Peer ID
+  const handlePeerId = (e) => {
+    setPeerId(e.target.value);
   }
 
+  //Listens for sdpOffers
+  /*useEffect(() => {
+    signalRService.signalConnection.on("ReceiveOffer", (callerId, offer, callerUsername) => {
+      createAnswer(callerId, offer, callerUsername)});
+  }, [connected]);*/
+
+  //Listens for sdpAnswers
+  /*useEffect(() => {
+    signalRService.signalConnection.on("ReceiveAnswer", (calleeId, answer, calleeUsername) => {
+      handleAnswer(calleeId, answer, calleeUsername)});
+  }, [connected]);*/
+
+  // Displays Media
   useEffect(() => {
-    if(displayVideo){
       navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
         const myLocalVideo = document.querySelector("#localVideo");
         myLocalVideo.srcObject = stream;
         setLocalStream(stream);
       })
-    }
-  }, [displayVideo])
-
+  }, [])
+  
+  //Starts server connection
   useEffect(() => {
     signalRService.startConnection().then((response) => {
       console.log("Connection to WebRTC has been created!"); 
       setMyConnectionId(signalRService.signalConnection.connectionId);
+      setConnected(true);
     })
     .catch((error) => console.log(error));
   }, [])
@@ -123,16 +132,20 @@ function VideoRoom() {
         {myConnectionId ? <div>My Connection ID: {myConnectionId}</div> : null}
       </div>
       <div>
-        <button type="button" onClick={allowVideo}>Use Camera</button>
-        {displayVideo ? <video playsInline autoPlay muted id="localVideo"></video> : <div>No Video</div>}
+        <h1>Your Video</h1>
+        <video playsInline autoPlay muted id="localVideo"></video>
       </div>
       <div>
+        <h1>Peer</h1>
         <video playsInline autoPlay id="remoteVideo"></video>
       </div>
       <div>
-        <h1>Offer</h1>
-        <button type="button" onClick={createOffer}>Create an Offer</button>
-        <textarea id="offer"></textarea>
+        <h1>Call</h1>
+        <form>
+          <label>User ID</label>
+          <input type="text" onChange={handlePeerId}></input>
+          <button onClick={() => createOffer(peerId)}>Call</button>
+        </form>
       </div>
       <div>
         <h1>Answer</h1>

@@ -17,16 +17,20 @@ const Signup = () => {
       console.log("Passwords do not match");
       return;
     }
-    const result = await axios.post("http://localhost:8000/DOTNETSIGNUP", {
-      email: email,
-      username: username,
-      password: password,
+    const result = await axios.post("http://localhost:5169/api/user", {
+      Name: username,
+      Email: email,
+      Password: password
     });
 
     if (result.data.success) {
       navigate("/login");
     }
   };
+
+  const handleTest = async (e) => {
+    const result = await axios.post("http://localhost:5169/api/user/test", {fuck: "fuck"})
+  }
 
   return (
     <div
@@ -102,6 +106,7 @@ const Signup = () => {
         </div>
         <button className="btn btn-primary btn-block">Register</button>
       </form>
+      <button className="btn btn-primary btn-block" onClick={(e) => handleTest()}>Test</button>
     </div>
   );
 };

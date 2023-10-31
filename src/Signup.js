@@ -1,112 +1,169 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import axios from "axios";
+import Button from "./button";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
+
+  const navigate = useNavigate();
   const [email, setEmail] = useState(null)
   const [username, setUsername] = useState(null);
   const [password, setPassword] = useState(null);
+  const [firstName, setFirstName] = useState(null);
+  const [lastName, setLastName] = useState(null);
   const [cPassword, setCPassword] = useState(null);
 
-  const navigate = useNavigate();
+  const handleEmail = (e) => {
+      setEmail(e.target.value);
+  }
+
+  const handleUsername = (e) => {
+    setUsername(e.target.value);
+  }
+
+  const handleFirstName = (e) => {
+    setFirstName(e.target.value);
+  }
+
+  const handleLastName = (e) => {
+    setLastName(e.target.value);
+  }
+
+  const handlePassword = (e) => {
+      setPassword(e.target.value);
+  }
+
+  const handleConfirmPassword = (e) => {
+    setCPassword(e.target.value);
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
     if (cPassword != password) {
       console.log("Passwords do not match");
+      alert("Passwords do not match!");
       return;
     }
-    const result = await axios.post("http://localhost:5169/api/user", {
-      Name: username,
-      Email: email,
-      Password: password
-    });
-
-    if (result.data.success) {
-      navigate("/login");
+    try
+    {
+      const result = await axios.post("http://localhost:5169/user/register", 
+      {
+        Username: username,
+        Email: email,
+        Password: password,
+        FirstName: firstName,
+        LastName: lastName
+      });
+      if(result){
+        console.log("Success!");
+        //navigate("/login");
+      }
+    } catch(error)
+    {
+      console.log(error);
     }
   };
 
-  const handleTest = async (e) => {
-    const result = await axios.post("http://localhost:5169/api/user/test", {fuck: "fuck"})
-  }
-
   return (
-    <div
-      className="container-fluid"
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        className="form-group d-flex flex-column justify-content-center align-items-center"
-        style={{ height: "50vh", width: "30vw" }}
-      >
-        <h2>Register</h2>
-        <h5>Join OurTime.</h5>
-        <div className="row mb-3">
-          <div className="col">
-            <label for="email" className="sr-only">
-              Email
-            </label>
-            <input
-              name="email"
-              id="email"
-              onChange={(e) => setEmail(e.target.value)}
-              className="form-control"
-              required
-            ></input>
-          </div>
+    <div className="d-flex justify-content-center align-items-center vh-100 vw-100">
+      <div className="h-75 w-50">
+        <div className="d-flex flex-column gap-2 mb-3">
+          <h5>Sign In to Our Time</h5>
+          <button className="btn btn-sm btn-primary align-self-center w-100">Sign-in</button>
         </div>
-        <label for="username" className="sr-only">
-          Username
-        </label>
-        <input
-          name="username"
-          id="username"
-          onChange={(e) => setUsername(e.target.value)}
-          className="form-control mb-3"
-          required
-          placeholder="Username"
-        ></input>
-        <div className="row mb-3">
-          <div className="col">
-            <label for="password" className="sr-only">
-              Password
-            </label>
-            <input
-              name="password"
-              id="password"
-              type={"password"}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-control"
-              required
-              placeholder="Password"
-            ></input>
+        <form className="container">
+          <div className="mb-5">
+            <h4>Create a New Account</h4>
+            <p>It's free and always will be.</p>
           </div>
-          <div className="col">
-            <label for="cPassword" className="sr-only">
-              Confirm Password
-            </label>
-            <input
-              name="cPassword"
-              id="cPassword"
-              type={"password"}
-              onChange={(e) => setCPassword(e.target.value)}
-              className="form-control"
-              required
-              placeholder="Confirm Password"
-            ></input>
+          <div className="row">
+            <div className="form-group col-6">
+              <label for="email" className="form-label">
+                  Email
+              </label>
+              <input
+                  name="email"
+                  id="email"
+                  onChange={handleEmail}
+                  required
+                  className="form-control"
+              ></input>
+            </div>
+            <div className="form-group col-6">
+              <label for="username" className="form-label">
+                Username
+              </label>
+              <input
+                name="username"
+                id="username"
+                onChange={handleUsername}
+                required
+                placeholder="johntheman"
+                className="form-control"
+              ></input>
+            </div>
           </div>
-        </div>
-        <button className="btn btn-primary btn-block">Register</button>
-      </form>
-      <button className="btn btn-primary btn-block" onClick={(e) => handleTest()}>Test</button>
+          <div className="row mt-1">
+            <div className="form-group col-6">
+              <label for="FirstName" className="form-label">
+                First Name
+              </label>
+              <input
+                name="FirstName"
+                id="FirstName"
+                onChange={handleFirstName}
+                required
+                placeholder="John"
+                className="form-control"
+              ></input> 
+            </div>
+            <div className="form-group col-6">
+              <label for="LastName" className="form-label">
+                Last Name
+              </label>
+              <input
+                name="LastName"
+                id="LastName"
+                onChange={handleLastName}
+                required
+                placeholder="Smith"
+                className="form-control"
+              ></input>
+            </div>
+          </div>
+          <div className="row mt-1">
+            <div className="form-group col-6">
+              <label for="password" className="form-label">
+                Password
+              </label>
+              <input
+                name="password"
+                id="password"
+                type={"password"}
+                onChange={handlePassword}
+                required
+                placeholder="Password"
+                className="form-control"
+              ></input>
+            </div>
+            <div className="form-group col-6">
+                <label for="cPassword" className="form-label">
+                  Confirm Password
+                </label>
+                <input
+                  name="cPassword"
+                  id="cPassword"
+                  type={"password"}
+                  onChange={handleConfirmPassword}
+                  required
+                  placeholder="Confirm Password"
+                  className="form-control"
+                ></input>
+            </div>
+          </div>
+          <Button handleClick={handleSubmit} text={"Register"} className={"btn btn btn-primary align-self-center btn-block w-100 mt-5"}/>
+        </form>
+      </div> 
     </div>
   );
 };

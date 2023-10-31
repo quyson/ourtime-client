@@ -18,12 +18,14 @@ const Login = () => {
     }
 
     const handleSignUp = (e) => {
-        useNavigate("/signup");
+        navigate("/signup");
     }
 
     const sendInfo = async (e) => {
         try
         {
+            console.log(email);
+            console.log(password);
             const response = await axios.post(`http://localhost:8000/DOTNETROUTE`, 
             {
                 email: email,

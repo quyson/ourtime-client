@@ -31,7 +31,7 @@ const Login = () => {
             });
             localStorage.setItem("token", response.data.token);
             console.log("Successfully got token: ", response.data.token)
-            navigate("/");
+            navigate("/home");
         } catch(error)
         {
             throw error;

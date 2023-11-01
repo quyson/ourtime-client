@@ -6,11 +6,11 @@ import axios from "axios";
 const Login = () => {
 
     const navigate = useNavigate();
-    const [email, setEmail] = useState(null);
+    const [username, setUsername] = useState(null);
     const [password, setPassword] = useState(null);
 
-    const handleEmail = (e) => {
-        setEmail(e.target.value);
+    const handleUsername = (e) => {
+        setUsername(e.target.value);
     }
 
     const handlePassword = (e) => {
@@ -24,11 +24,9 @@ const Login = () => {
     const sendInfo = async (e) => {
         try
         {
-            console.log(email);
-            console.log(password);
             const response = await axios.post(`http://localhost:8000/DOTNETROUTE`, 
             {
-                email: email,
+                username: username,
                 password: password,
             });
             localStorage.setItem("token", response.data.token);
@@ -36,20 +34,32 @@ const Login = () => {
             navigate("/");
         } catch(error)
         {
+            throw error;
             console.log(error);
         }
     }
     
     return(
-        <div>
-            <form>
-                <label for={"email"}>Email</label>
-                <input id="email" type="email" onChange={handleEmail}></input>
-                <label for={"password"}>Password</label>
-                <input id="password" type="password" onChange={handlePassword}></input>
-                <Button handleClick={sendInfo} text={"Log In"} />
-                <Button handleClick={handleSignUp} text={"Sign Up"} />
-            </form>
+        <div className="d-flex flex-column vw-100 vh-100 align-items-center justify-content-center bg-secondary">
+            <div className="row w-75">
+                <div className="col-6">
+                    <h1 className="display-3 text-primary mt-5">Our Time</h1>
+                    <h3 className="mt=5">Reach the people you love at the touch of your fingertips</h3>
+                </div>
+                <div className="col-6">
+                    <form className="d-flex flex-column container form-group bg-light p-5">
+                        <label for={"username"} className="form-label">Username</label>
+                        <input id="username" type="string" onChange={handleUsername} className="form-control"></input>
+                        <label for={"password"} className="form-label">Password</label>
+                        <input id="password" type="password" onChange={handlePassword} className="form-control"></input>
+                        <Button handleClick={sendInfo} text={"Log In"} className={"btn btn btn-primary align-self-center btn-block w-100 mt-3"}/>
+                        <div className="align-self-center mt-3">
+                            <p>Forgot your password?</p>
+                        </div>
+                        <Button handleClick={handleSignUp} text={"Sign Up"} className={"btn btn btn-success align-self-center btn-block w-100"}/>
+                    </form>
+                </div>
+            </div>
         </div>
     )
 }

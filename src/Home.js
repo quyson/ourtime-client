@@ -7,8 +7,12 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
     const navigate = useNavigate();
 
+    const handleVideoRoom = (e) => {
+        navigate("/test");
+    }
+
     const handleSignUp = (e) => {
-        navigate("/signup");
+        navigate('/signup')
     }
 
     return(
@@ -20,7 +24,7 @@ const Home = () => {
                         <h1 className="display-3 font-weight-bold mb-5">Talk to Anyone All Over the <span className="text-primary">World</span></h1>
                         <h5><span className="font-weight-bold text-primary">OurTime</span> Technology is your loyal assistant in reaching anybody anywhere in the world. With the future of communication, you can meet anyone, anywhere, anytime without actually being there.</h5>
                         <div className="d-flex mt-5 w-100 gap-3">
-                            <Button handleClick={handleSignUp} text={"Start a Call"} className={"btn btn-lg btn-success"}/>
+                            <Button handleClick={handleVideoRoom} text={"Start a Call"} className={"btn btn-lg btn-success"}/>
                             <Button handleClick={handleSignUp} text={"Sign Up"} className={"btn btn-lg btn-primary"}/>
                         </div>
                     </div>

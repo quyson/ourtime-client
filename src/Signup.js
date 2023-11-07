@@ -56,7 +56,7 @@ const Signup = () => {
       });
       if(result){
         console.log("Success!");
-        //navigate("/login");
+        navigate("/");
       }
     } catch(error)
     {

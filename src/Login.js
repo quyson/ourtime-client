@@ -24,13 +24,14 @@ const Login = () => {
     const sendInfo = async (e) => {
         try
         {
-            const response = await axios.post(`http://localhost:8000/DOTNETROUTE`, 
+            const response = await axios.post(`http://localhost:5169/user/login`, 
             {
                 username: username,
                 password: password,
             });
-            localStorage.setItem("token", response.data.token);
-            console.log("Successfully got token: ", response.data.token)
+            localStorage.setItem("token", response.data);
+            console.log('response:', response)
+            console.log("Successfully got token: ", response.data)
             navigate("/home");
         } catch(error)
         {

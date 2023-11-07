@@ -3,9 +3,18 @@ import axios from "axios";
 import Button from "./button";
 import Navbar from "./navbar";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { setCurrentUser } from "./redux/slices/userSlice";
+import { useDispatch } from "react-redux";
 
 const Home = () => {
+    
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const currentToken = useSelector(
+        (state) => state.token && state.user.currentToken
+      );
 
     const handleVideoRoom = (e) => {
         navigate("/test");
@@ -14,6 +23,21 @@ const Home = () => {
     const handleSignUp = (e) => {
         navigate('/signup')
     }
+
+    useEffect(() => {
+        let token;
+        if(currentToken){
+            token = currentToken;
+        } else {
+            token = localStorage.getItem("token");
+        }
+        axios.get(`http://localhost:5169/user/name`, {
+                headers: { Authorization: `Bearer ${token}` },
+              })
+            .then((result) => {
+                dispatch(setCurrentUser(result.data));
+              });
+    }, []);
 
     return(
         <div style={{paddingTop: "5rem"}}>

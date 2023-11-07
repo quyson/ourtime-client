@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "./button";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { setToken } from "./redux/slices/tokenSlice";
 
 const Login = () => {
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [username, setUsername] = useState(null);
     const [password, setPassword] = useState(null);
 
@@ -30,12 +33,10 @@ const Login = () => {
                 password: password,
             });
             localStorage.setItem("token", response.data);
-            console.log('response:', response)
-            console.log("Successfully got token: ", response.data)
+            dispatch(setToken(response.data));
             navigate("/home");
         } catch(error)
         {
-            throw error;
             console.log(error);
         }
     }

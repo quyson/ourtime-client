@@ -17,7 +17,7 @@ const Home = () => {
       );
 
     const handleVideoRoom = (e) => {
-        navigate("/test");
+        navigate("/videoRoom");
     }
 
     const handleSignUp = (e) => {
@@ -31,7 +31,7 @@ const Home = () => {
         } else {
             token = localStorage.getItem("token");
         }
-        axios.get(`http://localhost:5169/user/name`, {
+        axios.get(`https://localhost:5169/user/name`, {
                 headers: { Authorization: `Bearer ${token}` },
               })
             .then((result) => {

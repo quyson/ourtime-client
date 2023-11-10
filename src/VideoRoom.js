@@ -1,14 +1,19 @@
 import React, {useState, useEffect, useRef} from "react";
 import signalRService from "./signalR";
+import { useSelector } from "react-redux";
+import Navbar from "./navbar";
 
 function VideoRoom() {
+
+  const username = useSelector(
+    (state) => state.user && state.user.currentUser
+  );
 
   const [localStream, setLocalStream] = useState(null);
   const [globalPeerConnection, setGlobalPeerConnection] = useState({});
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [peerId, setPeerId] = useState("");
-  const [username, setUsername] = useState("");
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(true);
 
   const createOffer = async (peerId) => {
     let configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]}
@@ -38,10 +43,11 @@ function VideoRoom() {
 
     let offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-
     setGlobalPeerConnection(peerConnection);
-
+    console.log(peerConnection)
+    console.log(offer)
     signalRService.signalConnection.invoke("Offer", (peerId, iceOffer, username));
+    
   }
 
   const createAnswer = async (callerId, offer, username) => {
@@ -107,44 +113,47 @@ function VideoRoom() {
       handleAnswer(calleeId, answer, calleeUsername)});
   }, [connected]);*/
 
-  // Displays Media
   useEffect(() => {
-      navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) => {
-        const myLocalVideo = document.querySelector("#localVideo");
-        myLocalVideo.srcObject = stream;
+      const myLocalVideo = document.querySelector("#localVideo");
+      navigator.mediaDevices.getUserMedia({video: {"width": 640, "height": 480}, audio: true}).then((stream) => {
+        myLocalVideo.srcObject = stream
         setLocalStream(stream);
+      }).catch((error) => {
+        console.log("Error:", error);
       })
   }, [])
   
-  //Starts server connection
   useEffect(() => {
     signalRService.startConnection().then((response) => {
       console.log("Connection to WebRTC has been created!"); 
       setMyConnectionId(signalRService.signalConnection.connectionId);
-      setConnected(true);
     })
     .catch((error) => console.log(error));
   }, [])
  
   return (
-    <div>
-      <div>
-        {myConnectionId ? <div>My Connection ID: {myConnectionId}</div> : null}
+    <div style={{paddingTop: "5rem"}}>
+      <Navbar />
+      <div className="d-flex justify-content-center gap-3">
+        <div className="card border border-dark">
+          <h3 className="card-header text-center">Your Video</h3>
+          <video playsInline autoPlay id="localVideo"></video>
+        </div>
+        {connected == true ? <div className="card border border-dark">
+          <h3 className="card-header">Friend's Video</h3>
+          <video playsInline autoPlay id="remoteVideo"></video>
+        </div> : null}
       </div>
       <div>
-        <h1>Your Video</h1>
-        <video playsInline autoPlay muted id="localVideo"></video>
-      </div>
-      <div>
-        <h1>Peer</h1>
-        <video playsInline autoPlay id="remoteVideo"></video>
+        <h1>My Connection ID</h1>
+        {myConnectionId ? <div>{myConnectionId}</div> : <button>Click</button>}
       </div>
       <div>
         <h1>Call</h1>
         <form>
           <label>User ID</label>
           <input type="text" onChange={handlePeerId}></input>
-          <button onClick={() => createOffer(peerId)}>Call</button>
+          <button type="button" onClick={() => createOffer(peerId)}>Call</button>
         </form>
       </div>
       <div>

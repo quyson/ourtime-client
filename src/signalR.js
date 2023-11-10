@@ -5,7 +5,7 @@ const signalRService = {
 
     startConnection: () => {
         const connection = new HubConnectionBuilder()
-        .withUrl('https://localhost:7015/webRTC', {withCredentials: true})
+        .withUrl('https://localhost:5169/webRTC', {withCredentials: true})
         .build();
 
         signalRService.signalConnection = connection;

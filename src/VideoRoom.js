@@ -101,6 +101,19 @@ function VideoRoom() {
     }
   }
 
+  const handleIceCandidate = (iceCandidate) => {
+    if(globalPeerConnection){
+      const candidate = new RTCIceCandidate(JSON.parse(iceCandidate));
+      globalPeerConnection.addIceCandidate(candidate)
+            .then(() => {
+                console.log("ICE candidate added successfully");
+            })
+            .catch((error) => {
+                console.error("Error adding ICE candidate:", error);
+            });
+    }
+  }
+
 
   //handle Peer ID
   const handlePeerId = (e) => {
@@ -108,16 +121,23 @@ function VideoRoom() {
   }
 
   //Listens for sdpOffers
-  /*useEffect(() => {
+  useEffect(() => {
     signalRService.signalConnection.on("ReceiveOffer", (callerId, offer, callerUsername) => {
       createAnswer(callerId, offer, callerUsername)});
-  }, [connected]);*/
+  }, []);
 
   //Listens for sdpAnswers
-  /*useEffect(() => {
+  useEffect(() => {
     signalRService.signalConnection.on("ReceiveAnswer", (calleeId, answer, calleeUsername) => {
       handleAnswer(calleeId, answer, calleeUsername)});
-  }, [connected]);*/
+  }, []);
+
+  //Listens for IceConnection
+  useEffect(() => {
+    signalRService.signalConnection.on("ReceiveIceCandidate", (senderId, candidate) => {
+      handleIceCandidate(candidate)});
+  }, []);
+
 
   useEffect(() => {
       const myLocalVideo = document.querySelector("#localVideo");

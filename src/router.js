@@ -7,17 +7,17 @@ import Home from "./Home";
 import Test from "./test";
 
 const Router = () => {
-    return (
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Login />}></Route>
-            <Route path="/signup" element={<Signup />}></Route>
-            <Route path="/videoRoom" element={<VideoRoom />}></Route>
-            <Route path="/home" element={<Home />}></Route>
-            <Route path="/test" element={<Test />}></Route>
-          </Routes>
-        </BrowserRouter>
-    );
-}
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />}></Route>
+        <Route path="/signup" element={<Signup />}></Route>
+        <Route path="/videoRoom" element={<VideoRoom />}></Route>
+        <Route path="/home" element={<Home />}></Route>
+        <Route path="/test" element={<Test />}></Route>
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
 export default Router;

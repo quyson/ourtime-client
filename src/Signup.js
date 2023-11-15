@@ -5,9 +5,8 @@ import Button from "./button";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
-
   const navigate = useNavigate();
-  const [email, setEmail] = useState(null)
+  const [email, setEmail] = useState(null);
   const [username, setUsername] = useState(null);
   const [password, setPassword] = useState(null);
   const [firstName, setFirstName] = useState(null);
@@ -15,28 +14,28 @@ const Signup = () => {
   const [cPassword, setCPassword] = useState(null);
 
   const handleEmail = (e) => {
-      setEmail(e.target.value);
-  }
+    setEmail(e.target.value);
+  };
 
   const handleUsername = (e) => {
     setUsername(e.target.value);
-  }
+  };
 
   const handleFirstName = (e) => {
     setFirstName(e.target.value);
-  }
+  };
 
   const handleLastName = (e) => {
     setLastName(e.target.value);
-  }
+  };
 
   const handlePassword = (e) => {
-      setPassword(e.target.value);
-  }
+    setPassword(e.target.value);
+  };
 
   const handleConfirmPassword = (e) => {
     setCPassword(e.target.value);
-  }
+  };
 
   const handleSubmit = async (e) => {
     if (cPassword != password) {
@@ -44,22 +43,19 @@ const Signup = () => {
       alert("Passwords do not match!");
       return;
     }
-    try
-    {
-      const result = await axios.post("https://localhost:5169/user/register", 
-      {
+    try {
+      const result = await axios.post("https://localhost:5169/user/register", {
         Username: username,
         Email: email,
         Password: password,
         FirstName: firstName,
-        LastName: lastName
+        LastName: lastName,
       });
-      if(result){
+      if (result) {
         console.log("Success!");
         navigate("/");
       }
-    } catch(error)
-    {
+    } catch (error) {
       console.log(error);
     }
   };
@@ -69,7 +65,9 @@ const Signup = () => {
       <div className="h-75 w-50">
         <div className="d-flex flex-column gap-2 mb-3">
           <h5>Sign In to Our Time</h5>
-          <button className="btn btn-sm btn-primary align-self-center w-100">Sign-in</button>
+          <button className="btn btn-sm btn-primary align-self-center w-100">
+            Sign-in
+          </button>
         </div>
         <form className="container">
           <div className="mb-5">
@@ -79,14 +77,14 @@ const Signup = () => {
           <div className="row">
             <div className="form-group col-6">
               <label for="email" className="form-label">
-                  Email
+                Email
               </label>
               <input
-                  name="email"
-                  id="email"
-                  onChange={handleEmail}
-                  required
-                  className="form-control"
+                name="email"
+                id="email"
+                onChange={handleEmail}
+                required
+                className="form-control"
               ></input>
             </div>
             <div className="form-group col-6">
@@ -115,7 +113,7 @@ const Signup = () => {
                 required
                 placeholder="John"
                 className="form-control"
-              ></input> 
+              ></input>
             </div>
             <div className="form-group col-6">
               <label for="LastName" className="form-label">
@@ -147,23 +145,29 @@ const Signup = () => {
               ></input>
             </div>
             <div className="form-group col-6">
-                <label for="cPassword" className="form-label">
-                  Confirm Password
-                </label>
-                <input
-                  name="cPassword"
-                  id="cPassword"
-                  type={"password"}
-                  onChange={handleConfirmPassword}
-                  required
-                  placeholder="Confirm Password"
-                  className="form-control"
-                ></input>
+              <label for="cPassword" className="form-label">
+                Confirm Password
+              </label>
+              <input
+                name="cPassword"
+                id="cPassword"
+                type={"password"}
+                onChange={handleConfirmPassword}
+                required
+                placeholder="Confirm Password"
+                className="form-control"
+              ></input>
             </div>
           </div>
-          <Button handleClick={handleSubmit} text={"Register"} className={"btn btn btn-primary align-self-center btn-block w-100 mt-5"}/>
+          <Button
+            handleClick={handleSubmit}
+            text={"Register"}
+            className={
+              "btn btn btn-primary align-self-center btn-block w-100 mt-5"
+            }
+          />
         </form>
-      </div> 
+      </div>
     </div>
   );
 };

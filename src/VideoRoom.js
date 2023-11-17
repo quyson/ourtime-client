@@ -11,6 +11,7 @@ function VideoRoom() {
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [peerId, setPeerId] = useState("");
   const [connected, setConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState(null);
 
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -31,12 +32,14 @@ function VideoRoom() {
     let iceOffer = JSON.stringify(peerConnection.localDescription);
 
     peerConnection.onicecandidate = async (event) => {
+      let iceCandidate;
       if (event.candidate) {
+        iceCandidate = JSON.stringify(event.candidate);
         signalRService.signalConnection.invoke(
           "SendIceCandidate",
           peerId,
           username,
-          JSON.stringify(event.candidate)
+          iceCandidate
         );
       }
     };
@@ -74,12 +77,14 @@ function VideoRoom() {
     let iceAnswer = JSON.stringify(peerConnection.localDescription);
 
     peerConnection.onicecandidate = async (event) => {
+      let iceCandidate;
       if (event.candidate) {
+        iceCandidate = JSON.stringify(event.candidate);
         signalRService.signalConnection.invoke(
           "SendIceCandidate",
           callerId,
           username,
-          JSON.stringify(event.candidate)
+          iceCandidate
         );
       }
     };
@@ -95,6 +100,8 @@ function VideoRoom() {
 
   const handleAnswer = async (calleeId, answer, calleeUsername) => {
     setConnected(true);
+
+    setConnectionState(globalPeerConnection.current.iceConnectionState);
     if (connected) {
       let remoteStream = new MediaStream();
       let remoteVideo = document.querySelector("#remoteVideo");
@@ -115,10 +122,10 @@ function VideoRoom() {
   };
 
   const handleIceCandidate = (iceCandidate) => {
-    console.log("hello");
+    console.log(iceCandidate);
     if (globalPeerConnection.current) {
-      console.log("uh hello");
       const candidate = new RTCIceCandidate(JSON.parse(iceCandidate));
+      console.log("candidate", candidate);
       globalPeerConnection.current
         .addIceCandidate(candidate)
         .then(() => {
@@ -162,12 +169,9 @@ function VideoRoom() {
   //Listens for IceConnection
   useEffect(() => {
     if (myConnectionId) {
-      signalRService.signalConnection.on(
-        "ReceiveIceCandidate",
-        (senderId, candidate) => {
-          handleIceCandidate(candidate);
-        }
-      );
+      signalRService.signalConnection.on("ReceiveIceCandidate", (candidate) => {
+        handleIceCandidate(candidate);
+      });
     }
   }, [myConnectionId]);
 
@@ -233,6 +237,11 @@ function VideoRoom() {
           </button>
         </form>
       </div>
+      {connectionState ? (
+        <div>{connectionState}</div>
+      ) : (
+        <div>Nothing to see</div>
+      )}
     </div>
   );
 }

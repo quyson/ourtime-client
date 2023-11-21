@@ -2,16 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import signalRService from "./signalR";
 import { useSelector } from "react-redux";
 import Navbar from "./navbar";
+import CallingModal from "./callingModal";
+import CallModal from "./callModal";
+import { Modal } from "bootstrap";
 
 function VideoRoom() {
   const username = useSelector((state) => state.user && state.user.currentUser);
 
   const [localStream, setLocalStream] = useState(null);
   const globalPeerConnection = useRef(null);
+  const callerInfo = useRef(null);
+  const [beingCalled, setBeingCalled] = useState(false);
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [peerId, setPeerId] = useState("");
   const [connected, setConnected] = useState(false);
-  const [connectionState, setConnectionState] = useState(null);
 
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -45,11 +49,18 @@ function VideoRoom() {
     };
     globalPeerConnection.current = peerConnection;
     signalRService.signalConnection.invoke("Offer", peerId, iceOffer, username);
+    OfferModal();
+  };
+
+  const OfferModal = () => {
+    const modal = new Modal(document.getElementById("callModal"), {
+      keyboard: false,
+    });
+    modal.show();
   };
 
   const createAnswer = async (callerId, offer, callerUsername) => {
     setConnected(true);
-
     let peerConnection = new RTCPeerConnection(configuration);
 
     if (localStream) {
@@ -96,12 +107,34 @@ function VideoRoom() {
       iceAnswer,
       username
     );
+
+    const modal = new Modal(document.getElementById("callingModal"), {
+      keyboard: false,
+    });
+    modal.hide();
+  };
+
+  const handleDeclineCall = () => {
+    console.log("User declined call!");
+    if (callerInfo.current) {
+      callerInfo.current = null;
+    }
+    const callModal = new Modal(document.getElementById("callModal"));
+    if (typeof callModal != "undefined" && callModal != null) {
+      callModal.hide();
+    }
+    const callingModal = new Modal(document.getElementById("#callingModal"));
+    if (typeof callingModal != "undefined" && callingModal != null) {
+      callingModal.hide();
+    }
+    if (globalPeerConnection.current != null) {
+      globalPeerConnection.current = null;
+      globalPeerConnection = null;
+    }
   };
 
   const handleAnswer = async (calleeId, answer, calleeUsername) => {
     setConnected(true);
-
-    setConnectionState(globalPeerConnection.current.iceConnectionState);
     if (connected) {
       let remoteStream = new MediaStream();
       let remoteVideo = document.querySelector("#remoteVideo");
@@ -148,7 +181,13 @@ function VideoRoom() {
       signalRService.signalConnection.on(
         "ReceiveOffer",
         (callerId, offer, callerUsername) => {
-          createAnswer(callerId, offer, callerUsername);
+          callerInfo.current = {
+            callerId: callerId,
+            offer: offer,
+            callerUsername: callerUsername,
+          };
+          setBeingCalled(true);
+          answerModal();
         }
       );
     }
@@ -160,6 +199,8 @@ function VideoRoom() {
       signalRService.signalConnection.on(
         "ReceiveAnswer",
         (calleeId, answer, calleeUsername) => {
+          const modal = document.getElementById("#callModal");
+          modal.hide();
           handleAnswer(calleeId, answer, calleeUsername);
         }
       );
@@ -175,12 +216,12 @@ function VideoRoom() {
     }
   }, [myConnectionId]);
 
-  //Listens for Decline Call
-  /*useEffect(() => {
-    signalRService.signalConnection.on("Declined", (message) =>{
+  //Listens for declined call
+  useEffect(() => {
+    signalRService.signalConnection.on("Declined", (message) => {
       handleDeclineCall(message);
-    })
-  }, [])*/
+    });
+  }, []);
 
   useEffect(() => {
     const myLocalVideo = document.querySelector("#localVideo");
@@ -208,42 +249,10 @@ function VideoRoom() {
   return (
     <div style={{ paddingTop: "5rem" }}>
       <Navbar />
-      <div
-        class="modal fade"
-        id="exampleModal"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">
-                "Incoming Call!"
-              </h5>
-            </div>
-            <div class="modal-body">...</div>
-            <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-success"
-                data-dismiss="modal"
-              >
-                Answer
-              </button>
-              <button
-                type="button"
-                class="btn btn-danger close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span> End
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CallModal />
+      {beingCalled ? (
+        <CallingModal createAnswer={createAnswer} callerInfo={callerInfo} />
+      ) : null}
       <div className="d-flex justify-content-center gap-3">
         <div className="card border border-dark">
           <h3 className="card-header text-center">Your Video</h3>
@@ -273,11 +282,6 @@ function VideoRoom() {
           </button>
         </form>
       </div>
-      {connectionState ? (
-        <div>{connectionState}</div>
-      ) : (
-        <div>Nothing to see</div>
-      )}
     </div>
   );
 }

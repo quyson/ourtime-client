@@ -13,6 +13,7 @@ function VideoRoom() {
   const globalPeerConnection = useRef(null);
   const callerInfo = useRef(null);
   const [beingCalled, setBeingCalled] = useState(false);
+  const [calling, setCalling] = useState(false);
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [peerId, setPeerId] = useState("");
   const [connected, setConnected] = useState(false);
@@ -49,14 +50,7 @@ function VideoRoom() {
     };
     globalPeerConnection.current = peerConnection;
     signalRService.signalConnection.invoke("Offer", peerId, iceOffer, username);
-    OfferModal();
-  };
-
-  const OfferModal = () => {
-    const modal = new Modal(document.getElementById("callModal"), {
-      keyboard: false,
-    });
-    modal.show();
+    setCalling(true);
   };
 
   const createAnswer = async (callerId, offer, callerUsername) => {
@@ -107,11 +101,23 @@ function VideoRoom() {
       iceAnswer,
       username
     );
-
+    setBeingCalled(false);
     const modal = new Modal(document.getElementById("callingModal"), {
       keyboard: false,
     });
     modal.hide();
+  };
+
+  const declineCall = (peerId) => {
+    const callModal = new Modal(document.getElementById("callModal"));
+    if (typeof callModal != "undefined" && callModal != null) {
+      callModal.hide();
+    }
+    const callingModal = new Modal(document.getElementById("#callingModal"));
+    if (typeof callingModal != "undefined" && callingModal != null) {
+      callingModal.hide();
+    }
+    signalRService.signalConnection.invoke("Decline", peerId);
   };
 
   const handleDeclineCall = () => {
@@ -131,6 +137,8 @@ function VideoRoom() {
       globalPeerConnection.current = null;
       globalPeerConnection = null;
     }
+    setCalling(false);
+    setBeingCalled(false);
   };
 
   const handleAnswer = async (calleeId, answer, calleeUsername) => {
@@ -199,8 +207,7 @@ function VideoRoom() {
       signalRService.signalConnection.on(
         "ReceiveAnswer",
         (calleeId, answer, calleeUsername) => {
-          const modal = document.getElementById("#callModal");
-          modal.hide();
+          setCalling(false);
           handleAnswer(calleeId, answer, calleeUsername);
         }
       );
@@ -249,9 +256,13 @@ function VideoRoom() {
   return (
     <div style={{ paddingTop: "5rem" }}>
       <Navbar />
-      <CallModal />
+      {calling ? <CallModal declineCall={declineCall} peerId={peerId} /> : null}
       {beingCalled ? (
-        <CallingModal createAnswer={createAnswer} callerInfo={callerInfo} />
+        <CallingModal
+          createAnswer={createAnswer}
+          callerInfo={callerInfo}
+          declineCall={declineCall}
+        />
       ) : null}
       <div className="d-flex justify-content-center gap-3">
         <div className="card border border-dark">

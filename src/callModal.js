@@ -1,9 +1,9 @@
 import React from "react";
 
-const CallModal = () => {
+const CallModal = ({ declineCall, peerId }) => {
   return (
     <div
-      class="modal fade"
+      class="modal fade show"
       id="callModal"
       tabindex="-1"
       role="dialog"
@@ -19,7 +19,12 @@ const CallModal = () => {
           </div>
           <div class="modal-body">...</div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger" data-dismiss="modal">
+            <button
+              type="button"
+              class="btn btn-danger"
+              data-dismiss="modal"
+              onClick={() => declineCall(peerId)}
+            >
               End
             </button>
           </div>

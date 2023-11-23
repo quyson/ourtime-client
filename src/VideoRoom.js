@@ -17,6 +17,7 @@ function VideoRoom() {
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [peerId, setPeerId] = useState("");
   const [connected, setConnected] = useState(false);
+  const [friendId, setFriendId] = useState(null);
 
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -102,21 +103,20 @@ function VideoRoom() {
       username
     );
     setBeingCalled(false);
-    const modal = new Modal(document.getElementById("callingModal"), {
-      keyboard: false,
-    });
-    modal.hide();
+    setFriendId(callerId);
   };
 
   const declineCall = (peerId) => {
-    const callModal = new Modal(document.getElementById("callModal"));
+    /*const callModal = new Modal(document.getElementById("callModal"));
     if (typeof callModal != "undefined" && callModal != null) {
       callModal.hide();
     }
     const callingModal = new Modal(document.getElementById("#callingModal"));
     if (typeof callingModal != "undefined" && callingModal != null) {
       callingModal.hide();
-    }
+    }*/
+    setCalling(false);
+    setBeingCalled(false);
     signalRService.signalConnection.invoke("Decline", peerId);
   };
 
@@ -125,6 +125,7 @@ function VideoRoom() {
     if (callerInfo.current) {
       callerInfo.current = null;
     }
+    /*
     const callModal = new Modal(document.getElementById("callModal"));
     if (typeof callModal != "undefined" && callModal != null) {
       callModal.hide();
@@ -132,16 +133,18 @@ function VideoRoom() {
     const callingModal = new Modal(document.getElementById("#callingModal"));
     if (typeof callingModal != "undefined" && callingModal != null) {
       callingModal.hide();
-    }
+    }*/
+    setCalling(false);
+    setBeingCalled(false);
+
     if (globalPeerConnection.current != null) {
       globalPeerConnection.current = null;
       globalPeerConnection = null;
     }
-    setCalling(false);
-    setBeingCalled(false);
   };
 
   const handleAnswer = async (calleeId, answer, calleeUsername) => {
+    setFriendId(calleeId);
     setConnected(true);
     if (connected) {
       let remoteStream = new MediaStream();
@@ -178,6 +181,57 @@ function VideoRoom() {
     }
   };
 
+  const disconnect = (peerId) => {
+    console.log(globalPeerConnection.current.connectionState);
+    globalPeerConnection.current.forEach((peer) => {
+      // Close each track
+      peer.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      // Remove all event listeners
+      peer.ontrack = null;
+      peer.onremovetrack = null;
+      peer.onicecandidate = null;
+      peer.oniceconnectionstatechange = null;
+      peer.onsignalingstatechange = null;
+
+      // Close the connection
+      peer.close();
+    });
+    globalPeerConnection.current = null;
+    setConnected(false);
+    if (callerInfo.current) {
+      callerInfo.current = null;
+    }
+    signalRService.signalConnection.invoke("Disconnect", peerId);
+  };
+
+  handleDisconnected = () => {
+    console.log(globalPeerConnection.current.connectionState);
+    globalPeerConnection.current.forEach((peer) => {
+      // Close each track
+      peer.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      // Remove all event listeners
+      peer.ontrack = null;
+      peer.onremovetrack = null;
+      peer.onicecandidate = null;
+      peer.oniceconnectionstatechange = null;
+      peer.onsignalingstatechange = null;
+
+      // Close the connection
+      peer.close();
+    });
+    globalPeerConnection.current = null;
+    setConnected(false);
+    if (callerInfo.current) {
+      callerInfo.current = null;
+    }
+  };
+
   //handle Peer ID
   const handlePeerId = (e) => {
     setPeerId(e.target.value);
@@ -195,7 +249,6 @@ function VideoRoom() {
             callerUsername: callerUsername,
           };
           setBeingCalled(true);
-          answerModal();
         }
       );
     }
@@ -227,6 +280,13 @@ function VideoRoom() {
   useEffect(() => {
     signalRService.signalConnection.on("Declined", (message) => {
       handleDeclineCall(message);
+    });
+  }, []);
+
+  //Listens for End Call
+  useEffect(() => {
+    signalRService.signalConnection.on("Disconnected", () => {
+      handleDisconnected();
     });
   }, []);
 
@@ -293,6 +353,9 @@ function VideoRoom() {
           </button>
         </form>
       </div>
+      {globalPeerConnection.current && connected ? (
+        <button onClick={disconnect(friendId)}>Disconnect</button>
+      ) : null}
     </div>
   );
 }

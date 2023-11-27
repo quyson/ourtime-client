@@ -17,6 +17,7 @@ function VideoRoom() {
   const [peerId, setPeerId] = useState("");
   const [connected, setConnected] = useState(false);
   const [friendId, setFriendId] = useState(null);
+  const [temporaryIceCache, setTemporaryIceCache] = useState([]);
 
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -106,14 +107,18 @@ function VideoRoom() {
   };
 
   const declineCall = (peerId) => {
-    /*const callModal = new Modal(document.getElementById("callModal"));
-    if (typeof callModal != "undefined" && callModal != null) {
-      callModal.hide();
+    if (globalPeerConnection.current != null) {
+      globalPeerConnection.current = null;
+      globalPeerConnection = null;
     }
-    const callingModal = new Modal(document.getElementById("#callingModal"));
-    if (typeof callingModal != "undefined" && callingModal != null) {
-      callingModal.hide();
-    }*/
+
+    if (temporaryIceCache.length != 0) {
+      setTemporaryIceCache([]);
+    }
+
+    if (callerInfo.current) {
+      callerInfo.current = null;
+    }
     setCalling(false);
     setBeingCalled(false);
     signalRService.signalConnection.invoke("Decline", peerId);
@@ -121,25 +126,21 @@ function VideoRoom() {
 
   const handleDeclineCall = () => {
     console.log("User declined call!");
-    if (callerInfo.current) {
-      callerInfo.current = null;
-    }
-    /*
-    const callModal = new Modal(document.getElementById("callModal"));
-    if (typeof callModal != "undefined" && callModal != null) {
-      callModal.hide();
-    }
-    const callingModal = new Modal(document.getElementById("#callingModal"));
-    if (typeof callingModal != "undefined" && callingModal != null) {
-      callingModal.hide();
-    }*/
-    setCalling(false);
-    setBeingCalled(false);
-
     if (globalPeerConnection.current != null) {
       globalPeerConnection.current = null;
       globalPeerConnection = null;
     }
+
+    if (temporaryIceCache.length != 0) {
+      setTemporaryIceCache([]);
+    }
+
+    if (callerInfo.current) {
+      callerInfo.current = null;
+    }
+
+    setCalling(false);
+    setBeingCalled(false);
   };
 
   const handleAnswer = async (calleeId, answer, calleeUsername) => {
@@ -165,7 +166,10 @@ function VideoRoom() {
   };
 
   const handleIceCandidate = (iceCandidate) => {
-    console.log(iceCandidate);
+    if (!globalPeerConnection.current) {
+      setTemporaryIceCache([...temporaryIceCache, JSON.parse(iceCandidate)]);
+      console.log("temporarily added to cache!");
+    }
     if (globalPeerConnection.current) {
       const candidate = new RTCIceCandidate(JSON.parse(iceCandidate));
       console.log("adding candidate", candidate);
@@ -177,6 +181,14 @@ function VideoRoom() {
         .catch((error) => {
           console.error("Error adding ICE candidate:", error);
         });
+    }
+    if (temporaryIceCache.length != 0 && globalPeerConnection.current) {
+      temporaryIceCache.forEach((iceCandidate) => {
+        let candidate = new RTCIceCandidate(iceCandidate);
+        globalPeerConnection.current
+          .addIceCandidate(candidate)
+          .then((result) => console.log("Added Ice Candidate from Cache!"));
+      });
     }
   };
 

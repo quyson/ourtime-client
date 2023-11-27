@@ -1,37 +1,36 @@
-import React from "react";
+import { useState } from "react";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
-const CallModal = ({ declineCall, peerId }) => {
+function CallModal({ declineCall, peerId, calling }) {
+  const [show, setShow] = useState(true);
+
+  const handleClose = () => {
+    declineCall(peerId);
+    setCalling(false);
+    setShow(false);
+  };
+
   return (
-    <div
-      class="modal fade show"
-      id="callModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="callModal"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">
-              {"Calling..."}
-            </h5>
-          </div>
-          <div class="modal-body">...</div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-danger"
-              data-dismiss="modal"
-              onClick={() => declineCall(peerId)}
-            >
-              End
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <>
+      <Modal
+        show={show}
+        onHide={handleClose}
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header>
+          <Modal.Title>Calling in process</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>...Waiting for an Answer...</Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={handleClose}>
+            Decline
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
-};
+}
 
 export default CallModal;

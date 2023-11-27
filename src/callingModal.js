@@ -10,7 +10,7 @@ const CallingModal = React.forwardRef(
         tabindex="-1"
         role="dialog"
         aria-labelledby="callingModal"
-        aria-hidden="true"
+        aria-hidden="false"
       >
         <div class="modal-dialog" role="document">
           <div class="modal-content">

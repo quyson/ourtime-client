@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 import Navbar from "./navbar";
 import CallingModal from "./callingModal";
 import CallModal from "./callModal";
-import { Modal } from "bootstrap";
 
 function VideoRoom() {
   const username = useSelector((state) => state.user && state.user.currentUser);
@@ -115,6 +114,7 @@ function VideoRoom() {
     if (typeof callingModal != "undefined" && callingModal != null) {
       callingModal.hide();
     }*/
+    console.log("fu");
     setCalling(false);
     setBeingCalled(false);
     signalRService.signalConnection.invoke("Decline", peerId);
@@ -169,7 +169,7 @@ function VideoRoom() {
     console.log(iceCandidate);
     if (globalPeerConnection.current) {
       const candidate = new RTCIceCandidate(JSON.parse(iceCandidate));
-      console.log("candidate", candidate);
+      console.log("adding candidate", candidate);
       globalPeerConnection.current
         .addIceCandidate(candidate)
         .then(() => {
@@ -201,13 +201,14 @@ function VideoRoom() {
     });
     globalPeerConnection.current = null;
     setConnected(false);
+    setFriendId(false);
     if (callerInfo.current) {
       callerInfo.current = null;
     }
     signalRService.signalConnection.invoke("Disconnect", peerId);
   };
 
-  handleDisconnected = () => {
+  const handleDisconnected = () => {
     console.log(globalPeerConnection.current.connectionState);
     globalPeerConnection.current.forEach((peer) => {
       // Close each track
@@ -227,6 +228,7 @@ function VideoRoom() {
     });
     globalPeerConnection.current = null;
     setConnected(false);
+    setFriendId(false);
     if (callerInfo.current) {
       callerInfo.current = null;
     }
@@ -278,16 +280,22 @@ function VideoRoom() {
 
   //Listens for declined call
   useEffect(() => {
-    signalRService.signalConnection.on("Declined", (message) => {
-      handleDeclineCall(message);
-    });
+    if (myConnectionId) {
+      signalRService.signalConnection.on("Declined", (message) => {
+        console.log(message);
+        handleDeclineCall(message);
+      });
+    }
   }, []);
 
   //Listens for End Call
   useEffect(() => {
-    signalRService.signalConnection.on("Disconnected", () => {
-      handleDisconnected();
-    });
+    if (myConnectionId) {
+      signalRService.signalConnection.on("Disconnected", (message) => {
+        console.log(message);
+        handleDisconnected();
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -316,7 +324,13 @@ function VideoRoom() {
   return (
     <div style={{ paddingTop: "5rem" }}>
       <Navbar />
-      {calling ? <CallModal declineCall={declineCall} peerId={peerId} /> : null}
+      {calling ? (
+        <CallModal
+          declineCall={declineCall}
+          peerId={peerId}
+          calling={calling}
+        />
+      ) : null}
       {beingCalled ? (
         <CallingModal
           createAnswer={createAnswer}
@@ -353,7 +367,7 @@ function VideoRoom() {
           </button>
         </form>
       </div>
-      {globalPeerConnection.current && connected ? (
+      {globalPeerConnection.current && connected && friendId ? (
         <button onClick={disconnect(friendId)}>Disconnect</button>
       ) : null}
     </div>

@@ -114,7 +114,6 @@ function VideoRoom() {
     if (typeof callingModal != "undefined" && callingModal != null) {
       callingModal.hide();
     }*/
-    console.log("fu");
     setCalling(false);
     setBeingCalled(false);
     signalRService.signalConnection.invoke("Decline", peerId);
@@ -324,13 +323,7 @@ function VideoRoom() {
   return (
     <div style={{ paddingTop: "5rem" }}>
       <Navbar />
-      {calling ? (
-        <CallModal
-          declineCall={declineCall}
-          peerId={peerId}
-          calling={calling}
-        />
-      ) : null}
+      {calling ? <CallModal declineCall={declineCall} peerId={peerId} /> : null}
       {beingCalled ? (
         <CallingModal
           createAnswer={createAnswer}

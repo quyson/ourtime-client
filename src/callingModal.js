@@ -1,53 +1,46 @@
-import React from "react";
+import { useState } from "react";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
-const CallingModal = React.forwardRef(
-  ({ createAnswer, callerInfo, declineCall }) => {
-    console.log("shit");
-    return (
-      <div
-        class="modal fade show"
-        id="callingModal"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="callingModal"
-        aria-hidden="false"
+function CallingModal({ createAnswer, callerInfo, declineCall }) {
+  const [show, setShow] = useState(true);
+
+  const handleClose = () => {
+    declineCall(peerId);
+    setShow(false);
+  };
+
+  return (
+    <>
+      <Modal
+        show={show}
+        onHide={handleClose}
+        backdrop="static"
+        keyboard={false}
+        centered
       >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">
-                {`${callerInfo.current.callerUsername} is calling you!`}
-              </h5>
-            </div>
-            <div class="modal-body">...</div>
-            <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-success"
-                onClick={() =>
-                  createAnswer(
-                    callerInfo.current.callerId,
-                    callerInfo.current.offer,
-                    callerInfo.current.callerUsername
-                  )
-                }
-              >
-                Answer
-              </button>
-              <button
-                type="button"
-                class="btn btn-danger"
-                data-dismiss="modal"
-                onClick={() => declineCall(callerInfo.current.callerId)}
-              >
-                End
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-);
+        <Modal.Header>
+          <Modal.Title>{`${callerInfo.current.callerUsername} is calling`}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>...Ring Ring Ring...</Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="success"
+            onClick={createAnswer(
+              callerInfo.current.callerId,
+              callerInfo.current.offer,
+              callerInfo.current.callerUsername
+            )}
+          >
+            Accept
+          </Button>
+          <Button variant="danger" onClick={handleClose}>
+            Decline
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}
 
 export default CallingModal;

@@ -7,7 +7,6 @@ function CallModal({ declineCall, peerId, calling }) {
 
   const handleClose = () => {
     declineCall(peerId);
-    setCalling(false);
     setShow(false);
   };
 
@@ -18,6 +17,7 @@ function CallModal({ declineCall, peerId, calling }) {
         onHide={handleClose}
         backdrop="static"
         keyboard={false}
+        centered
       >
         <Modal.Header>
           <Modal.Title>Calling in process</Modal.Title>

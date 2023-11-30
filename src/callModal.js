@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 
-function CallModal({ declineCall, peerId, calling }) {
+const CallModal = ({ declineCall, peerId }) => {
   const [show, setShow] = useState(true);
 
   const handleClose = () => {
@@ -31,6 +31,6 @@ function CallModal({ declineCall, peerId, calling }) {
       </Modal>
     </>
   );
-}
+};
 
 export default CallModal;

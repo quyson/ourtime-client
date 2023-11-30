@@ -19,11 +19,11 @@ function VideoRoom() {
   const [friendId, setFriendId] = useState(null);
   const [temporaryIceCache, setTemporaryIceCache] = useState([]);
 
-  const configuration = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  };
+  const createOffer = async (peerId) => {
+    const configuration = {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    };
 
-  const createOffer = async (configuration, peerId) => {
     let peerConnection = new RTCPeerConnection(configuration);
 
     if (localStream) {
@@ -54,8 +54,16 @@ function VideoRoom() {
     setCalling(true);
   };
 
-  const createAnswer = async (callerId, offer, callerUsername) => {
-    setConnected(true);
+  const createAnswer = async (
+    globalPeerConnection,
+    temporaryIceCache,
+    callerId,
+    offer,
+    callerUsername
+  ) => {
+    let configuration = {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    };
     let peerConnection = new RTCPeerConnection(configuration);
 
     if (localStream) {
@@ -96,6 +104,14 @@ function VideoRoom() {
     };
 
     globalPeerConnection.current = peerConnection;
+    if (temporaryIceCache.length != 0 && globalPeerConnection.current) {
+      temporaryIceCache.forEach((iceCandidate) => {
+        let candidate = new RTCIceCandidate(iceCandidate);
+        globalPeerConnection.current.addIceCandidate(candidate);
+        console.log("Added Ice Candidate from Cache!");
+      });
+      setTemporaryIceCache([]);
+    }
     signalRService.signalConnection.invoke(
       "Answer",
       callerId,
@@ -104,12 +120,12 @@ function VideoRoom() {
     );
     setBeingCalled(false);
     setFriendId(callerId);
+    setConnected(true);
   };
 
   const declineCall = (peerId) => {
     if (globalPeerConnection.current != null) {
       globalPeerConnection.current = null;
-      globalPeerConnection = null;
     }
 
     if (temporaryIceCache.length != 0) {
@@ -125,7 +141,6 @@ function VideoRoom() {
   };
 
   const handleDeclineCall = () => {
-    console.log("User declined call!");
     if (globalPeerConnection.current != null) {
       globalPeerConnection.current = null;
       globalPeerConnection = null;
@@ -145,18 +160,17 @@ function VideoRoom() {
 
   const handleAnswer = async (calleeId, answer, calleeUsername) => {
     setFriendId(calleeId);
-    setConnected(true);
-    if (connected) {
-      let remoteStream = new MediaStream();
-      let remoteVideo = document.querySelector("#remoteVideo");
-      remoteVideo.srcObject = remoteStream;
 
-      globalPeerConnection.current.ontrack = async (event) => {
-        event.streams[0].getTracks().forEach((track) => {
-          remoteStream.addTrack(track);
-        });
-      };
-    }
+    let remoteStream = new MediaStream();
+    let remoteVideo = document.querySelector("#remoteVideo");
+    remoteVideo.srcObject = remoteStream;
+
+    globalPeerConnection.current.ontrack = async (event) => {
+      event.streams[0].getTracks().forEach((track) => {
+        console.log("track", track);
+        remoteStream.addTrack(track);
+      });
+    };
 
     if (!globalPeerConnection.current.currentRemoteDescription) {
       await globalPeerConnection.current.setRemoteDescription(
@@ -167,8 +181,11 @@ function VideoRoom() {
 
   const handleIceCandidate = (iceCandidate) => {
     if (!globalPeerConnection.current) {
-      setTemporaryIceCache([...temporaryIceCache, JSON.parse(iceCandidate)]);
-      console.log("temporarily added to cache!");
+      setTemporaryIceCache((prevIceCache) => [
+        ...prevIceCache,
+        JSON.parse(iceCandidate),
+      ]);
+      console.log("Temporarily added to cache!");
     }
     if (globalPeerConnection.current) {
       const candidate = new RTCIceCandidate(JSON.parse(iceCandidate));
@@ -182,34 +199,27 @@ function VideoRoom() {
           console.error("Error adding ICE candidate:", error);
         });
     }
-    if (temporaryIceCache.length != 0 && globalPeerConnection.current) {
-      temporaryIceCache.forEach((iceCandidate) => {
-        let candidate = new RTCIceCandidate(iceCandidate);
-        globalPeerConnection.current
-          .addIceCandidate(candidate)
-          .then((result) => console.log("Added Ice Candidate from Cache!"));
-      });
-    }
   };
 
   const disconnect = (peerId) => {
-    console.log(globalPeerConnection.current.connectionState);
-    globalPeerConnection.current.forEach((peer) => {
-      // Close each track
-      peer.getTracks().forEach((track) => {
-        track.stop();
+    if (globalPeerConnection.current) {
+      globalPeerConnection.current.forEach((peer) => {
+        // Close each track
+        peer.getTracks().forEach((track) => {
+          track.stop();
+        });
+
+        // Remove all event listeners
+        peer.ontrack = null;
+        peer.onremovetrack = null;
+        peer.onicecandidate = null;
+        peer.oniceconnectionstatechange = null;
+        peer.onsignalingstatechange = null;
+
+        // Close the connection
+        peer.close();
       });
-
-      // Remove all event listeners
-      peer.ontrack = null;
-      peer.onremovetrack = null;
-      peer.onicecandidate = null;
-      peer.oniceconnectionstatechange = null;
-      peer.onsignalingstatechange = null;
-
-      // Close the connection
-      peer.close();
-    });
+    }
     globalPeerConnection.current = null;
     setConnected(false);
     setFriendId(false);
@@ -261,6 +271,7 @@ function VideoRoom() {
             offer: offer,
             callerUsername: callerUsername,
           };
+          console.log(callerInfo);
           setBeingCalled(true);
         }
       );
@@ -274,6 +285,7 @@ function VideoRoom() {
         "ReceiveAnswer",
         (calleeId, answer, calleeUsername) => {
           setCalling(false);
+          setConnected(true);
           handleAnswer(calleeId, answer, calleeUsername);
         }
       );
@@ -333,11 +345,16 @@ function VideoRoom() {
   }, []);
 
   return (
-    <div style={{ paddingTop: "5rem" }}>
+    <div
+      style={{ paddingTop: "5rem", background: "black" }}
+      className="d-flex flex-column align-items-center"
+    >
       <Navbar />
       {calling ? <CallModal declineCall={declineCall} peerId={peerId} /> : null}
       {beingCalled ? (
         <CallingModal
+          globalPeerConnection={globalPeerConnection}
+          temporaryIceCache={temporaryIceCache}
           createAnswer={createAnswer}
           callerInfo={callerInfo}
           declineCall={declineCall}
@@ -355,26 +372,40 @@ function VideoRoom() {
           </div>
         ) : null}
       </div>
-      <div>
-        <h1>My Connection ID</h1>
+      <div className="my-5 d-flex gap-5 justify-content-center align-items-center bg-secondary p-3 rounded">
+        <h3>My Connection ID</h3>
         {myConnectionId ? <div>{myConnectionId}</div> : <button>Click</button>}
-      </div>
-      <div>
-        <h1>Call</h1>
-        <form>
-          <label>User ID</label>
-          <input type="text" onChange={handlePeerId}></input>
+
+        {globalPeerConnection.current && connected && friendId ? (
           <button
-            type="button"
-            onClick={() => createOffer(configuration, peerId)}
+            className="btn btn-danger"
+            onClick={() => disconnect(friendId)}
           >
-            Call
+            Disconnect
           </button>
-        </form>
+        ) : (
+          <div>
+            <h3>Call</h3>
+            <form>
+              <div className="form-group">
+                <label className="form-label">User ID</label>
+                <input
+                  className="form-control"
+                  type="text"
+                  onChange={handlePeerId}
+                ></input>
+              </div>
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={() => createOffer(peerId)}
+              >
+                Call
+              </button>
+            </form>
+          </div>
+        )}
       </div>
-      {globalPeerConnection.current && connected && friendId ? (
-        <button onClick={disconnect(friendId)}>Disconnect</button>
-      ) : null}
     </div>
   );
 }

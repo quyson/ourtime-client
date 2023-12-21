@@ -13,6 +13,10 @@ const VideoRoom = () => {
   const peerVideo = useRef();
 
   const [localStream, setLocalStream] = useState(null);
+  const [myConnectionId, setMyConnectionId] = useState(null);
+  const [beingCalled, setBeingCalled] = useState(null);
+  const [caller, setCaller] = useState(null);
+  const [callerData, setCallerData] = useState(null);
 
   useEffect(() => {
     navigator.mediaDevices
@@ -23,5 +27,18 @@ const VideoRoom = () => {
           userVideo.current.srcObject = stream;
         }
       });
-  }, []);
-};
+
+    signalRService
+      .startConnection()
+      .then((response) => {
+        console.log("Connection to WebRTC has been created!");
+        setMyConnectionId(signalRService.signalConnection.connectionId);
+      })
+      .catch((error) => console.log(error));
+
+    signalRService.signalConnection.on("incoming call", (data) => {
+        setBeingCalled(true);
+        setCaller(data.from);
+        setCallerData(data.signal);
+    });
+    }, []);

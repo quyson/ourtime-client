@@ -15,8 +15,39 @@ const VideoRoom = () => {
   const [localStream, setLocalStream] = useState(null);
   const [myConnectionId, setMyConnectionId] = useState(null);
   const [beingCalled, setBeingCalled] = useState(null);
+  const [calling, setCalling] = useState(null);
   const [caller, setCaller] = useState(null);
   const [callerData, setCallerData] = useState(null);
+  const [messages, setMessages] = useState([]);
+
+  const callPeer = (peerId) => {
+    setCalling(true);
+    const peer = new Peer({
+      initiator: true,
+      trickle: false,
+      stream: localStream,
+    });
+
+    peer.on("signal", (data) => {
+      const callInformation = {
+        userToCall: peerId,
+        signalData: data,
+        from: myConnectionId,
+      };
+      signalRService.signalConnection.invoke("callUser", callInformation);
+    });
+
+    peer.on("stream", (stream) => {
+      if (peerVideo.current) {
+        peerVideo.current.srcObject = stream;
+      }
+    });
+
+    socket.on("callAccepted", (signal) => {
+      setCallAccepted(true);
+      peer.signal(signal);
+    });
+  };
 
   useEffect(() => {
     navigator.mediaDevices
@@ -37,8 +68,14 @@ const VideoRoom = () => {
       .catch((error) => console.log(error));
 
     signalRService.signalConnection.on("incoming call", (data) => {
-        setBeingCalled(true);
-        setCaller(data.from);
-        setCallerData(data.signal);
+      setBeingCalled(true);
+      setCaller(data.from);
+      setCallerData(data.signal);
     });
-    }, []);
+  }, []);
+
+  signalRService.signalConnection.on("new message", (peerUsername, message) => {
+    const newMessage = `${peerUsername} - ${message}`;
+    setMessages([...messages, newMessage]);
+  });
+};

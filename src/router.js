@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import VideoRoom from "./VideoRoom";
+import VideoRoom from "./simplePeer";
 import Login from "./Login";
 import Signup from "./Signup";
 import Home from "./Home";

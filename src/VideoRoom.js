@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+/*import React, { useState, useEffect, useRef } from "react";
 import signalRService from "./signalR";
 import { useSelector } from "react-redux";
 import Navbar from "./navbar";
@@ -368,7 +368,7 @@ function VideoRoom() {
         {connected == true ? (
           <div className="card border border-dark">
             <h3 className="card-header">Friend's Video</h3>
-            <video playsInline autoPlay id="remoteVideo"></video>
+            <video playsInline autoPlay id="peerVideo"></video>
           </div>
         ) : null}
       </div>
@@ -410,4 +410,4 @@ function VideoRoom() {
   );
 }
 
-export default VideoRoom;
+export default VideoRoom;*/

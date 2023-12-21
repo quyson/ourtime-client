@@ -18,7 +18,9 @@ const VideoRoom = () => {
   const [calling, setCalling] = useState(null);
   const [caller, setCaller] = useState(null);
   const [callerData, setCallerData] = useState(null);
+  const [callAccepted, setCallAccepted] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [peerId, setPeerId] = useState(null);
 
   const callPeer = (peerId) => {
     setCalling(true);
@@ -43,10 +45,27 @@ const VideoRoom = () => {
       }
     });
 
-    socket.on("callAccepted", (signal) => {
+    signalRService.signalConnection.on("callAccepted", (signal) => {
       setCallAccepted(true);
       peer.signal(signal);
     });
+  };
+
+  const acceptCall = () => {
+    setCallAccepted(true);
+    setCalling(false);
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream: localStream,
+    });
+    peer.on("signal", (data) => {
+      signalRService.signalConnection.invoke("acceptCall", (data, caller));
+    });
+    peer.on("stream", (stream) => {
+      peerVideo.current.srcObject = stream;
+    });
+    peer.signal(callerSignal);
   };
 
   useEffect(() => {
@@ -78,4 +97,61 @@ const VideoRoom = () => {
     const newMessage = `${peerUsername} - ${message}`;
     setMessages([...messages, newMessage]);
   });
+
+  let mainView;
+
+  if (callAccepted) {
+    mainView = (
+      <Video
+        playsInline
+        ref={peerVideo}
+        autoPlay
+        style={{ width: "100%", height: "100%" }}
+      />
+    );
+  } else if (beingCalled) {
+    mainView = (
+      <div>
+        <h1>Friend is calling you</h1>
+        <button onClick={acceptCall}>
+          <h1>Accept</h1>
+        </button>
+      </div>
+    );
+  } else if (calling) {
+    mainView = (
+      <div>
+        <h1>Currently calling friend...</h1>
+      </div>
+    );
+  } else {
+    mainView = (
+      <form>
+        <label for={"peerId"}>Friend ID</label>
+        <input
+          name="peerId"
+          id="peerId"
+          onChange={(e) => setPeerId(e.target.value)}
+        ></input>
+        <button onClick={callPeer(peerId)}>Call</button>
+      </form>
+    );
+  }
+
+  return (
+    <div>
+      <Navbar />
+      <div className="d-flex justify-content-center gap-3">
+        <div className="card border border-dark">
+          <h3 className="card-header text-center">{username}</h3>
+          <video playsInline autoPlay id="userVideo" ref={userVideo}></video>
+        </div>
+        {mainView}
+      </div>
+      <div className="my-5 d-flex gap-5 justify-content-center align-items-center bg-secondary p-3 rounded">
+        <h3>My Connection ID</h3>
+        {myConnectionId ? <div>{myConnectionId}</div> : <button>Click</button>}
+      </div>
+    </div>
+  );
 };

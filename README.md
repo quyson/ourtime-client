@@ -1,6 +1,9 @@
 # OurTime Client
 The OurTime Client is a React-based web application designed to facilitate video communication between users. It leverages the WebRTC technology for real-time communication and integrates with a SignalR server to manage signaling and call setup. The application allows users to log in, initiate video calls, receive incoming calls, send messages, and disconnect from calls.
 
+### Server Repo Link:
+https://github.com/quyson/ourtime-server
+
 ## Application Structure
 ### Real-time Signaling (signalRService.js)
 Handles the SignalR connection to the server for real-time signaling. 
